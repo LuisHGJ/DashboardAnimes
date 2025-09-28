@@ -7,16 +7,41 @@ st.set_page_config(layout="wide")
 # Carregar dados
 df = pd.read_csv("anime.csv", sep=",", decimal=".")
 
+df = df.drop_duplicates()
+
+for col in ["episodes", "rating", "year", "members"]:
+    if col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
 if "episodes" in df.columns:
-    df["episodes"] = pd.to_numeric(df["episodes"], errors="coerce")
+    df["episodes"] = df["episodes"].fillna(df["episodes"].median())
 
-# Nota
 if "rating" in df.columns:
-    df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
+    df["rating"] = df["rating"].fillna(df["rating"].mean())
 
-# Ano
 if "year" in df.columns:
-    df["year"] = pd.to_numeric(df["year"], errors="coerce")
+    df["year"] = df["year"].fillna(df["year"].mode()[0])
+
+if "members" in df.columns:
+    df["members"] = df["members"].fillna(0)
+
+if "genre" in df.columns:
+    df["genre"] = df["genre"].str.strip().str.title()
+
+if "type" in df.columns:
+    df["type"] = df["type"].str.strip().str.title()
+
+if "year" in df.columns:
+    df = df[df["year"].between(1900, 2025, inclusive="both")]
+
+if "rating" in df.columns:
+    df = df[df["rating"].between(0, 10, inclusive="both")]
+
+if "episodes" in df.columns:
+    df = df[df["episodes"] >= 0]
+
+if "members" in df.columns:
+    df = df[df["members"] >= 0]
 
 df["episodes"] = pd.to_numeric(df["episodes"], errors="coerce")
 df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
@@ -87,4 +112,5 @@ st.plotly_chart(fig2, use_container_width=True)
 # Tipos de anime
 st.subheader("Distribuição por Tipo")
 fig3 = px.pie(df, names="type", title="Proporção de Tipos de Anime")
+
 st.plotly_chart(fig3, use_container_width=True)
