@@ -26,10 +26,13 @@ df["members"] = pd.to_numeric(df["members"], errors="coerce")
 genre_series = df["genre"].dropna().str.split(",").explode().str.strip()
 unique_genres = sorted(genre_series.unique())
 
+# Preparar lista de ratings inteiros únicos
+unique_ratings_int = sorted(df["rating"].dropna().apply(lambda x: int(x)).unique())
+
 # Filtros na barra lateral
 selected_genres = st.sidebar.multiselect("Gênero", unique_genres)
 selected_types = st.sidebar.multiselect("Tipo", df["type"].unique())
-selected_ratings = st.sidebar.multiselect("Avaliação", df["rating"].unique())
+selected_ratings = st.sidebar.multiselect("Avaliação", unique_ratings_int)
 
 # Aplicar filtros
 if selected_genres:
@@ -39,7 +42,7 @@ if selected_types:
     df = df[df["type"].isin(selected_types)]
 
 if selected_ratings:
-    df = df[df["rating"].isin(selected_ratings)]
+    df = df[df["rating"].apply(lambda x: int(x) in selected_ratings if pd.notnull(x) else False)]
 
 
 
@@ -57,8 +60,11 @@ with col3:
     st.metric("Média de Episódios", round(df["episodes"].mean(), 2))
 
 with col4:
-    mais_popular = df.loc[df["members"].idxmax()]
-    st.metric("Anime Mais Popular", mais_popular["name"])
+    if not df.empty:
+        mais_popular = df.loc[df["members"].idxmax()]
+        st.metric("Anime Mais Popular", mais_popular["name"])
+    else:
+        st.metric("Anime Mais Popular", "N/A")
 
 st.markdown("---")
 
