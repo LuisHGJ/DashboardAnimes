@@ -22,6 +22,27 @@ df["episodes"] = pd.to_numeric(df["episodes"], errors="coerce")
 df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
 df["members"] = pd.to_numeric(df["members"], errors="coerce")
 
+# Preparar lista de gêneros únicos
+genre_series = df["genre"].dropna().str.split(",").explode().str.strip()
+unique_genres = sorted(genre_series.unique())
+
+# Filtros na barra lateral
+selected_genres = st.sidebar.multiselect("Gênero", unique_genres)
+selected_types = st.sidebar.multiselect("Tipo", df["type"].unique())
+selected_ratings = st.sidebar.multiselect("Avaliação", df["rating"].unique())
+
+# Aplicar filtros
+if selected_genres:
+    df = df[df["genre"].apply(lambda x: any(g in x.split(",") for g in selected_genres) if pd.notnull(x) else False)]
+
+if selected_types:
+    df = df[df["type"].isin(selected_types)]
+
+if selected_ratings:
+    df = df[df["rating"].isin(selected_ratings)]
+
+
+
 st.title("Dashboard de Animes")
 
 col1, col2, col3, col4 = st.columns(4)
