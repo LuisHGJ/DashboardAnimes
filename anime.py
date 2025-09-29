@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import StandardScaler
 
 st.set_page_config(layout="wide")
 
@@ -114,3 +116,27 @@ st.subheader("Distribuição por Tipo")
 fig3 = px.pie(df, names="type", title="Proporção de Tipos de Anime")
 
 st.plotly_chart(fig3, use_container_width=True)
+
+st.markdown("---")
+
+st.subheader("Recomendador de Animes (KNN)")
+
+anime_escolhido = st.selectbox("Escolha um anime para receber recomendações:", df["name"].dropna().unique())
+
+features = df[["rating", "episodes", "members"]].fillna(0)
+scaler = StandardScaler()
+features_scaled = scaler.fit_transform(features)
+
+model = NearestNeighbors(n_neighbors=6, algorithm="auto")
+model.fit(features_scaled)
+
+anime_idx = df[df["name"] == anime_escolhido].index[0]
+distances, indices = model.kneighbors([features_scaled[anime_idx]])
+
+st.write("### Recomendações de Animes Semelhantes:")
+for idx in indices[0][1:]:
+    nome = df.loc[idx, "name"]
+    nota = df.loc[idx, "rating"]
+    tipo = df.loc[idx, "type"]
+    membros = df.loc[idx, "members"]
+    st.write(f"- **{nome}** | Nota: {nota} | Tipo: {tipo} | Membros: {membros}")
